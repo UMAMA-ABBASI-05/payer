@@ -40,7 +40,7 @@ class PayerApp extends StatelessWidget {
         ),
       ),
       // Agar userId null nahi hai to seedha Home par bhejein
-      home: startUserId != null ? HomeScreen() : LoginScreen(),
+      home: LoginScreen(),
 
       // Routes define kar saktay hain agar asani chahiye
       routes: {

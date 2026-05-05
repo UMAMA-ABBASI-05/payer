@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
               right: 25,
             ),
             decoration: const BoxDecoration(
-              color: Color(0xFF0D1B3E), // Dark Blue
+              color: Color.fromARGB(255, 248, 248, 248), // Dark Blue
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
@@ -73,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const Text(
                   "Insurance List",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Color.fromARGB(255, 30, 19, 90),
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),

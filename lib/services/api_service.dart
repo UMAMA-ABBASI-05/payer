@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   // Physical device ke liye laptop ka IP use karein (e.g., 192.168.x.x)
-  static const String baseUrl = "http://192.168.100.143:8003";
+  static const String baseUrl = "http://192.168.31.247:8003";
 
   // 1. Login
   Future<Map<String, dynamic>?> login(String email, String password) async {
