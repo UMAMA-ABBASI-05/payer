@@ -4,7 +4,7 @@ import '../screens/history_screen.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'package:flutter/material.dart';
-//import '../screens/lab_screen.dart';
+//import '../screens/insurance_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -15,8 +15,8 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   static const Color primaryBlue = Color(0xFF1A3B5D);
 
-  // Add LAB
-  bool _showAddLAB = false;
+  // Add Insurance
+  bool _showAddInsurance = false;
   final _insuranceNameCtrl = TextEditingController();
 
   // Hold Data
@@ -28,11 +28,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     super.dispose();
   }
 
-  void _saveLAB() async {
+  void _saveinsurance() async {
     if (_insuranceNameCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('LAB name required'),
+          content: Text('insurance name required'),
           backgroundColor: Colors.red,
         ),
       );
@@ -57,7 +57,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     if (result['success'] == true) {
       setState(() {
-        _showAddLAB = false;
+        _showAddInsurance = false;
         _insuranceNameCtrl.clear();
       });
     }
@@ -115,7 +115,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     MaterialPageRoute(builder: (_) => const InsuranceScreen()),
                   ),
                   child: const Text(
-                    'Show LABs',
+                    'Show insurances',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -126,7 +126,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Add LAB Button
+              // Add insurance Button
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -137,9 +137,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: () => setState(() => _showAddLAB = !_showAddLAB),
+                  onPressed: () =>
+                      setState(() => _showAddInsurance = !_showAddInsurance),
                   child: const Text(
-                    'Add LAB',
+                    'Add insurance',
                     style: TextStyle(
                       color: primaryBlue,
                       fontSize: 16,
@@ -149,8 +150,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
               ),
 
-              // Add LAB Form — toggle
-              if (_showAddLAB) ...[
+              // Add insurance Form — toggle
+              if (_showAddInsurance) ...[
                 const SizedBox(height: 20),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -163,14 +164,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Enter name of LAB',
+                        'Enter name of insurance',
                         style: TextStyle(color: Colors.grey, fontSize: 13),
                       ),
                       const SizedBox(height: 8),
                       TextField(
                         controller: _insuranceNameCtrl,
                         decoration: InputDecoration(
-                          hintText: 'LAB name...',
+                          hintText: 'insurance name...',
                           filled: true,
                           fillColor: const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
@@ -188,7 +189,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         children: [
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: _saveLAB,
+                              onPressed: _saveinsurance,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: primaryBlue,
                                 shape: RoundedRectangleBorder(
@@ -205,7 +206,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           Expanded(
                             child: OutlinedButton(
                               onPressed: () => setState(() {
-                                _showAddLAB = false;
+                                _showAddInsurance = false;
                                 _insuranceNameCtrl.clear();
                               }),
                               style: OutlinedButton.styleFrom(

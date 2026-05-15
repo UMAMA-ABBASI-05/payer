@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   // Physical device ke liye laptop ka IP use karein (e.g., 192.168.x.x)
-  static const String baseUrl = "http://192.168.50.14:8003";
+  static const String baseUrl = "http://192.168.31.247:8003";
   static Future<List<dynamic>> getAllInsurances() async {
     final res = await http.get(Uri.parse('$baseUrl/all-insurances'));
     if (res.statusCode == 200) return jsonDecode(res.body);
@@ -158,7 +158,9 @@ class ApiService {
   // 2. Get All Patients
   static Future<List<dynamic>> getAllPatients(String insuranceID) async {
     try {
-      final res = await http.get(Uri.parse('$baseUrl/get_all_patients/$insuranceID'));
+      final res = await http.get(
+        Uri.parse('$baseUrl/get_all_patients/$insuranceID'),
+      );
       print("Status: ${res.statusCode}");
       print("Body: ${res.body}");
       if (res.statusCode == 200) return jsonDecode(res.body);
@@ -170,8 +172,10 @@ class ApiService {
   }
 
   // 3. Register Patient
-  static Future<bool> registerPatient(Map<String, dynamic> data,String insuranceID) async {
-    
+  static Future<bool> registerPatient(
+    Map<String, dynamic> data,
+    String insuranceID,
+  ) async {
     final res = await http.post(
       Uri.parse('$baseUrl/reg_patient/$insuranceID'),
       headers: {'Content-Type': 'application/json'},
@@ -182,7 +186,9 @@ class ApiService {
 
   // 4. Get Pending Claims
   static Future<List<dynamic>> getAllPendingClaims(String insuranceID) async {
-    final res = await http.get(Uri.parse('$baseUrl/get_all_claims/$insuranceID'));
+    final res = await http.get(
+      Uri.parse('$baseUrl/get_all_claims/$insuranceID'),
+    );
     if (res.statusCode == 200) return jsonDecode(res.body);
     throw Exception('Failed to load claims');
   }

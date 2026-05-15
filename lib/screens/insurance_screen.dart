@@ -30,7 +30,7 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'LABs',
+          'Insurances',
           style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -54,18 +54,18 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(
               child: Text(
-                'No LABs found',
+                'No insurances found',
                 style: TextStyle(color: Colors.grey),
               ),
             );
           }
 
-          final labs = snapshot.data!;
+          final insurances = snapshot.data!;
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: labs.length,
+            itemCount: insurances.length,
             itemBuilder: (_, i) {
-              final l = labs[i];
+              final insurance = insurances[i];
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
@@ -86,20 +86,20 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            l['name'] ?? 'N/A',
+                            insurance['name'] ?? 'N/A',
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: primaryBlue,
                             ),
                           ),
-                          Text(
-                            'ID: ${l['lab_id'] ?? 'N/A'}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                          ),
+                          // Text(
+                          //   'ID: ${insurance['insurance_id'] ?? 'N/A'}',
+                          //   style: const TextStyle(
+                          //     fontSize: 12,
+                          //     color: Colors.grey,
+                          //   ),
+                          // ),
                         ],
                       ),
                     ),
