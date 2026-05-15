@@ -27,8 +27,10 @@ class _PendingClaimsScreenState extends State<PendingClaimsScreen> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
+    final prefs = await SharedPreferences.getInstance();
+    final insuranceId = prefs.getString('insurance_id') ?? '';
     try {
-      final data = await ApiService.getAllPendingClaims();
+      final data = await ApiService.getAllPendingClaims(insuranceId);
       setState(() {
         _all = data;
         _filtered = data;

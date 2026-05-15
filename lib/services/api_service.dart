@@ -1,48 +1,164 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   // Physical device ke liye laptop ka IP use karein (e.g., 192.168.x.x)
   static const String baseUrl = "http://192.168.50.14:8003";
-
-  // 1. Login
-  Future<Map<String, dynamic>?> login(String email, String password) async {
-    final response = await http.post(
-      Uri.parse("$baseUrl/login"),
-      body: jsonEncode({"email": email, "password": password}),
-      headers: {"Content-Type": "application/json"},
-    );
-    if (response.statusCode == 200) return jsonDecode(response.body);
-    return null;
+  static Future<List<dynamic>> getAllInsurances() async {
+    final res = await http.get(Uri.parse('$baseUrl/all-insurances'));
+    if (res.statusCode == 200) return jsonDecode(res.body);
+    throw Exception('Failed to load insurances');
   }
 
-  static Future<Map<String, dynamic>?> signup({
-    required String userName,
-    required String email,
-    required String password,
-  }) async {
+  // Admin Login
+  static Future<Map<String, dynamic>> loginAdmin(
+    String email,
+    String password,
+  ) async {
     try {
       final res = await http.post(
-        Uri.parse('$baseUrl/signup'),
+        Uri.parse('$baseUrl/login-admin'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'user_name': userName,
-          'email': email,
-          'password': password,
-        }),
+        body: jsonEncode({'email': email, 'password': password}),
       );
-      final data = jsonDecode(res.body);
-      if (res.statusCode == 200 || res.statusCode == 201) return data;
-      throw Exception(data['detail'] ?? 'Signup failed');
+      print("Admin Login Status: ${res.statusCode}");
+      print("Admin Login Body: ${res.body}");
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        return {'success': true, ...data};
+      }
+      final error = jsonDecode(res.body);
+      return {'success': false, 'message': error['detail'] ?? 'Login failed'};
     } catch (e) {
-      throw Exception(e.toString().replaceAll('Exception: ', ''));
+      return {'success': false, 'message': e.toString()};
     }
   }
 
-  // 2. Get All Patients
-  static Future<List<dynamic>> getAllPatients() async {
+  // Add Insurance
+  static Future<Map<String, dynamic>> addInsurances(String name) async {
     try {
-      final res = await http.get(Uri.parse('$baseUrl/get_all_patients'));
+      final res = await http.post(
+        Uri.parse('$baseUrl/add-insurance?name=$name'), // ← query param
+      );
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 201 || res.statusCode == 200)
+        return {'success': true, ...data};
+      return {'success': false, 'message': data['detail'] ?? 'Failed'};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<bool> changeConfigStatus(bool holdFlag) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/change-config-status'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'hold_flag': holdFlag}),
+      );
+      return res.statusCode == 201 || res.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Send Config to Engine
+  static Future<bool> sendConfigToEngine() async {
+    try {
+      final res = await http.post(Uri.parse('$baseUrl/sent-config-to-engine'));
+      return res.statusCode == 200 || res.statusCode == 201;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Config History
+  static Future<List<dynamic>> getConfigHistory() async {
+    final res = await http.get(Uri.parse('$baseUrl/config-history'));
+    if (res.statusCode == 200) return jsonDecode(res.body);
+    throw Exception('Failed to load history');
+  }
+
+  static Future<Map<String, dynamic>> login(
+    String email,
+    String password,
+    String insuranceId,
+  ) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/Login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'password': password,
+        'insurance_id': insuranceId, // ← add karo
+      }),
+    );
+    if (res.statusCode == 200) return jsonDecode(res.body);
+    final error = jsonDecode(res.body);
+    throw Exception(error['detail'] ?? 'Login failed');
+  }
+
+  static Future<void> signup(
+    String userName,
+    String email,
+    String password,
+    String insuranceId,
+  ) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/SignUp'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'user_name': userName,
+        'email': email,
+        'password': password,
+        'insurance_id': insuranceId, // ← add karo
+      }),
+    );
+    if (res.statusCode != 201) {
+      final error = jsonDecode(res.body);
+      throw Exception(error['detail'] ?? 'Signup failed');
+    }
+  }
+
+  // 1. Login
+  // Future<Map<String, dynamic>?> login(String email, String password) async {
+  //   final response = await http.post(
+  //     Uri.parse("$baseUrl/login"),
+  //     body: jsonEncode({"email": email, "password": password}),
+  //     headers: {"Content-Type": "application/json"},
+  //   );
+  //   if (response.statusCode == 200) return jsonDecode(response.body);
+  //   return null;
+  // }
+
+  // static Future<Map<String, dynamic>?> signup({
+  //   required String userName,
+  //   required String email,
+  //   required String password,
+  // }) async {
+  //   try {
+  //     final res = await http.post(
+  //       Uri.parse('$baseUrl/signup'),
+  //       headers: {'Content-Type': 'application/json'},
+  //       body: jsonEncode({
+  //         'user_name': userName,
+  //         'email': email,
+  //         'password': password,
+  //       }),
+  //     );
+  //     final data = jsonDecode(res.body);
+  //     if (res.statusCode == 200 || res.statusCode == 201) return data;
+  //     throw Exception(data['detail'] ?? 'Signup failed');
+  //   } catch (e) {
+  //     throw Exception(e.toString().replaceAll('Exception: ', ''));
+  //   }
+  // }
+
+  // 2. Get All Patients
+  static Future<List<dynamic>> getAllPatients(String insuranceID) async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/get_all_patients/$insuranceID'));
       print("Status: ${res.statusCode}");
       print("Body: ${res.body}");
       if (res.statusCode == 200) return jsonDecode(res.body);
@@ -54,9 +170,10 @@ class ApiService {
   }
 
   // 3. Register Patient
-  static Future<bool> registerPatient(Map<String, dynamic> data) async {
+  static Future<bool> registerPatient(Map<String, dynamic> data,String insuranceID) async {
+    
     final res = await http.post(
-      Uri.parse('$baseUrl/reg_patient'),
+      Uri.parse('$baseUrl/reg_patient/$insuranceID'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
     );
@@ -64,8 +181,8 @@ class ApiService {
   }
 
   // 4. Get Pending Claims
-  static Future<List<dynamic>> getAllPendingClaims() async {
-    final res = await http.get(Uri.parse('$baseUrl/get_all_claims'));
+  static Future<List<dynamic>> getAllPendingClaims(String insuranceID) async {
+    final res = await http.get(Uri.parse('$baseUrl/get_all_claims/$insuranceID'));
     if (res.statusCode == 200) return jsonDecode(res.body);
     throw Exception('Failed to load claims');
   }

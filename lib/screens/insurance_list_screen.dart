@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'add_customer_screen.dart';
 import 'pending_claims_screen.dart';
 import '../services/api_service.dart';
@@ -22,7 +23,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _load() async {
-    _patientsFuture = ApiService.getAllPatients();
+    final prefs = await SharedPreferences.getInstance();
+    final insuranceId = prefs.getString('insurance_id') ?? '';
+    _patientsFuture = ApiService.getAllPatients(insuranceId);
     final data = await _patientsFuture;
     setState(() {
       _allPatients = data;

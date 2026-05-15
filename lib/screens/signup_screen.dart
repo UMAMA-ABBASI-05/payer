@@ -1,57 +1,83 @@
 import 'package:flutter/material.dart';
-import '../widgets/custom_text_field.dart';
-import '../widgets/primary_button.dart';
-import '../services/api_service.dart';
+import '../../services/api_service.dart';
+import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({Key? key}) : super(key: key);
-
+  const SignupScreen({super.key});
   @override
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
-  final passController = TextEditingController();
-  bool _isLoading = false;
+  final _formKey = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+  bool _loading = false;
+  bool _showPass = false;
 
-  Future<void> _handleSignup() async {
-    final name = nameController.text.trim();
-    final email = emailController.text.trim();
-    final password = passController.text.trim();
+  List<dynamic> _labs = [];
+  String? _selectedInsuranceID;
+  bool _labsLoading = true;
 
-    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+  @override
+  void initState() {
+    super.initState();
+    _loadLabs();
+  }
+
+  Future<void> _loadLabs() async {
+    try {
+      final data = await ApiService.getAllInsurances();
+      setState(() {
+        _labs = data;
+        _labsLoading = false;
+      });
+    } catch (e) {
+      setState(() => _labsLoading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _signup() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedInsuranceID == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Sab fields bharein!"),
+          content: Text('Lab select karein'),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
-    setState(() => _isLoading = true);
-
+    setState(() => _loading = true);
     try {
-      final result = await ApiService.signup(
-        userName: name,
-        email: email,
-        password: password,
+      await ApiService.signup(
+        _nameCtrl.text.trim(),
+        _emailCtrl.text.trim(),
+        _passCtrl.text,
+        _selectedInsuranceID!, // ← lab_id pass karo
       );
-
       if (!mounted) return;
-
-      if (result != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Account successfully created!"),
-            backgroundColor: Colors.green,
-          ),
-        );
-        await Future.delayed(const Duration(seconds: 1));
-        if (mounted) Navigator.pop(context); // Login screen par wapas
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created! Please login.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
@@ -61,89 +87,239 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _loading = false);
     }
-  }
-
-  @override
-  void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    passController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 80),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 50),
-              const Text(
-                "Sign Up",
-                style: TextStyle(
-                  color: Color(0xFF1A1A1A),
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 50),
-              CustomTextField(
-                controller: nameController,
-                hintText: "Enter your name",
-                prefixIcon: Icons.person_outline_rounded,
-              ),
-              CustomTextField(
-                controller: emailController,
-                hintText: "Enter your email",
-                prefixIcon: Icons.mail_outline_rounded,
-              ),
-              CustomTextField(
-                controller: passController,
-                hintText: "Enter your password",
-                prefixIcon: Icons.lock_outline_rounded,
-                isPassword: true,
-              ),
-              _isLoading
-                  ? const Padding(
-                      padding: EdgeInsets.only(top: 30),
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF4C84F3),
-                      ),
-                    )
-                  : PrimaryButton(
-                      text: "Sign Up",
-                      onPressed: _handleSignup,
-                    ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Already have an account? ",
+                    'Create Account',
                     style: TextStyle(
-                        color: Color(0xFF6B778C), fontSize: 14),
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A1A2E),
+                    ),
                   ),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      "Sign In",
-                      style: TextStyle(
-                        color: Color(0xFF4C84F3),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Sign up to get started',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Username
+                  _field(
+                    _nameCtrl,
+                    'Username',
+                    Icons.person_outline,
+                    validator: (v) => v!.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Email
+                  _field(
+                    _emailCtrl,
+                    'Email',
+                    Icons.email_outlined,
+                    validator: (v) =>
+                        v!.contains('@') ? null : 'Valid email required',
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Password
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE0E0E0)),
+                    ),
+                    child: TextFormField(
+                      controller: _passCtrl,
+                      obscureText: !_showPass,
+                      validator: (v) => v!.isEmpty ? 'Required' : null,
+                      decoration: InputDecoration(
+                        hintText: 'Password',
+                        prefixIcon: const Icon(
+                          Icons.lock_outline,
+                          color: Colors.grey,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _showPass ? Icons.visibility : Icons.visibility_off,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () =>
+                              setState(() => _showPass = !_showPass),
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                        ),
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Lab Dropdown
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE0E0E0)),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _labsLoading
+                        ? const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFF1A3B5D),
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Labs loading...',
+                                  style: TextStyle(
+                                    color: Color(0xFFAAAAAA),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedInsuranceID,
+                              isExpanded: true,
+                              hint: const Row(
+                                children: [
+                                  Icon(
+                                    Icons.science_outlined,
+                                    color: Color(0xFFAAAAAA),
+                                    size: 22,
+                                  ),
+                                  SizedBox(width: 12),
+                                  Text(
+                                    'Select Lab',
+                                    style: TextStyle(
+                                      color: Color(0xFFAAAAAA),
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              items: _labs
+                                  .map(
+                                    (l) => DropdownMenuItem<String>(
+                                      value: l['insurance_id'].toString(),
+                                      child: Text(
+                                        l['name'] ?? 'N/A',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF333333),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (val) =>
+                                  setState(() => _selectedInsuranceID = val),
+                            ),
+                          ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Sign Up Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1A3B5D),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: _loading ? null : _signup,
+                      child: _loading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              'Sign Up',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Already have an account? '),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Text(
+                          'Login',
+                          style: TextStyle(
+                            color: Color(0xFF1A3B5D),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _field(
+    TextEditingController ctrl,
+    String hint,
+    IconData icon, {
+    String? Function(String?)? validator,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+      ),
+      child: TextFormField(
+        controller: ctrl,
+        validator: validator,
+        decoration: InputDecoration(
+          hintText: hint,
+          prefixIcon: Icon(icon, color: Colors.grey),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 12,
           ),
         ),
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../services/session_service.dart';
 
@@ -103,6 +104,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     }
 
     setState(() => _loading = true);
+    final prefs = await SharedPreferences.getInstance();
+    final insuranceId = prefs.getString('insurance_id') ?? '';
     try {
       final int? uid = await SessionService.getUserId();
       final bool success = await ApiService.registerPatient({
@@ -114,7 +117,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
             : null,
         "insurance_type": selectedPlan,
         "user_id": uid,
-      });
+      }, insuranceId);
 
       if (!mounted) return;
 
