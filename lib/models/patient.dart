@@ -1,6 +1,6 @@
 class Patient {
   final int? pId;
-  final int? mpi;
+  final int? nic;
   final String name;
   final String phoneNo;
   final String? gender;
@@ -9,7 +9,7 @@ class Patient {
 
   Patient({
     this.pId,
-    this.mpi,
+    this.nic,
     required this.name,
     required this.phoneNo,
     this.gender,
@@ -20,7 +20,7 @@ class Patient {
   factory Patient.fromJson(Map<String, dynamic> json) {
     return Patient(
       pId: json['p_id'],
-      mpi: json['mpi'],
+      nic: json['nic'],
       name: json['name'],
       phoneNo: json['phone_no'] ?? '',
       gender: json['gender'],

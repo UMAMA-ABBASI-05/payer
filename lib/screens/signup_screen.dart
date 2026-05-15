@@ -1,17 +1,80 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/primary_button.dart';
+import '../services/api_service.dart';
 
-class SignupScreen extends StatelessWidget {
-  SignupScreen({Key? key}) : super(key: key);
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({Key? key}) : super(key: key);
 
+  @override
+  State<SignupScreen> createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends State<SignupScreen> {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _handleSignup() async {
+    final name = nameController.text.trim();
+    final email = emailController.text.trim();
+    final password = passController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Sab fields bharein!"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await ApiService.signup(
+        userName: name,
+        email: email,
+        password: password,
+      );
+
+      if (!mounted) return;
+
+      if (result != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Account successfully created!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        await Future.delayed(const Duration(seconds: 1));
+        if (mounted) Navigator.pop(context); // Login screen par wapas
+      }
+    } catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Styling from Figma image_d2c77f.png (Registration)
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -21,7 +84,6 @@ class SignupScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 50),
-              // Main Title
               const Text(
                 "Sign Up",
                 style: TextStyle(
@@ -32,53 +94,48 @@ class SignupScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 50),
-
-              // Name Field (Person icon)
               CustomTextField(
                 controller: nameController,
                 hintText: "Enter your name",
                 prefixIcon: Icons.person_outline_rounded,
               ),
-
-              // Email Field (Mail icon)
               CustomTextField(
                 controller: emailController,
                 hintText: "Enter your email",
                 prefixIcon: Icons.mail_outline_rounded,
               ),
-
-              // Password Field (Lock icon + Eye)
               CustomTextField(
                 controller: passController,
                 hintText: "Enter your password",
                 prefixIcon: Icons.lock_outline_rounded,
                 isPassword: true,
               ),
-
-              // Blue Sign Up Button
-              PrimaryButton(
-                text: "Sign Up",
-                onPressed: () {
-                  // Handle signup logic
-                },
-              ),
-
-              // Bottom Text
+              _isLoading
+                  ? const Padding(
+                      padding: EdgeInsets.only(top: 30),
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF4C84F3),
+                      ),
+                    )
+                  : PrimaryButton(
+                      text: "Sign Up",
+                      onPressed: _handleSignup,
+                    ),
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    "Don’t have an account? ",
-                    style: TextStyle(color: Color(0xFF6B778C), fontSize: 14),
+                    "Already have an account? ",
+                    style: TextStyle(
+                        color: Color(0xFF6B778C), fontSize: 14),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context); // Go back to Login
-                    },
+                    onTap: () => Navigator.pop(context),
                     child: const Text(
                       "Sign In",
                       style: TextStyle(
-                        color: Color(0xFF4C84F3), // Figma Blue
+                        color: Color(0xFF4C84F3),
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),

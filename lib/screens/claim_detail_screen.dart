@@ -1,106 +1,260 @@
 import 'package:flutter/material.dart';
-import 'claim_detail_screen.dart';
+import '../services/api_service.dart';
 
-class PendingClaimsScreen extends StatelessWidget {
-  // Exact Figma style hardcoded data
-  final List<Map<String, dynamic>> dummyClaims = [
-    {"id": 1, "name": "Zara", "mpi": "10293", "status": "Pending"},
-    {"id": 2, "name": "Ayesha Khan", "mpi": "44532", "status": "Pending"},
-    {"id": 3, "name": "Ahmed Ali", "mpi": "88723", "status": "Pending"},
-    {"id": 4, "name": "Hamza Sheikh", "mpi": "22109", "status": "Pending"},
-  ];
+class ClaimDetailScreen extends StatefulWidget {
+  final int claimId;
+  final int userId;
+  const ClaimDetailScreen({
+    super.key,
+    required this.claimId,
+    required this.userId,
+  });
+
+  @override
+  State<ClaimDetailScreen> createState() => _ClaimDetailScreenState();
+}
+
+class _ClaimDetailScreenState extends State<ClaimDetailScreen> {
+  Map<String, dynamic>? _claim;
+  bool _loading = true;
+  bool _saving = false;
+
+  static const Color primaryColor = Color.fromARGB(255, 18, 38, 80);
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final data = await ApiService.getSingleClaim(widget.claimId);
+      setState(() {
+        _claim = data;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _unlockAndPop() async {
+    await ApiService.unlockClaim(widget.claimId, widget.userId);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Screen unlocked'),
+          backgroundColor: Colors.grey,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      Navigator.pop(context);
+    }
+  }
+
+  Future<void> _changeStatus(String status) async {
+    setState(() => _saving = true);
+    try {
+      final ok = await ApiService.changeClaimStatus(
+        widget.claimId,
+        status,
+        widget.userId,
+      );
+      if (!mounted) return;
+      if (ok) {
+        await ApiService.unlockClaim(widget.claimId, widget.userId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Claim $status successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Status update failed'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB), // Figma grey background
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          "Pending Claims",
-          style: TextStyle(color: Color(0xFF1A1A1A), fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(20),
-        itemCount: dummyClaims.length,
-        itemBuilder: (context, index) {
-          var claim = dummyClaims[index];
-          return Container(
-            margin: const EdgeInsets.only(bottom: 15),
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                )
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Text Side
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      claim['name'],
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A1A1A),
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      "MPI: ${claim['mpi']}",
-                      style: const TextStyle(color: Color(0xFF6B778C), fontSize: 14),
-                    ),
-                  ],
-                ),
-                
-                // Figma Blue "View" Button
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4C84F3), // Exact Blue
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
-                    elevation: 0,
-                  ),
-                  onPressed: () {
-                    // Zara ya kisi bhi card pe click karne se detail khulegi
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (c) => ClaimDetailScreen(claimId: claim['id']),
-                    //   ),
-                    // );
-                  },
-                  child: const Text(
-                    "View",
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
+    return WillPopScope(
+      onWillPop: () async {
+        await ApiService.unlockClaim(widget.claimId, widget.userId);
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Screen unlocked'),
+              backgroundColor: Colors.grey,
+              duration: Duration(seconds: 2),
             ),
           );
-        },
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FB),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: _unlockAndPop,
+          ),
+          title: Text(
+            _claim?['patient_name'] ?? 'Claim Detail',
+            style: const TextStyle(
+              color: primaryColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        body: _loading
+            ? const Center(
+                child: CircularProgressIndicator(color: primaryColor),
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Detail Card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE5E9F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _row('Gender:', _claim?['gender'] ?? 'N/A'),
+                          _row(
+                            'Phone no:',
+                            _claim?['patient_phone_no'] ?? 'N/A',
+                          ),
+                          _row('Bill:', '${_claim?['bill_amount'] ?? 'N/A'}'),
+                          _row(
+                            'Total coverage:',
+                            '${_claim?['total_coverage'] ?? 'N/A'}',
+                          ),
+                          _row(
+                            'Remaining amount:',
+                            '${(_claim?['total_coverage'] ?? 0) - (_claim?['amount_used'] ?? 0)}',
+                          ),
+                          _row(
+                            'Service:',
+                            _claim?['service_included'] == true
+                                ? 'Included'
+                                : 'Excluded',
+                          ),
+                          _row(
+                            'Test:',
+                            _claim?['tests_included'] == true
+                                ? 'Included'
+                                : 'Excluded',
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    // Approve / Reject Buttons
+                    _saving
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: primaryColor,
+                            ),
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () => _changeStatus('Approved'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primaryColor,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Approve',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () => _changeStatus('Rejected'),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    side: const BorderSide(
+                                      color: Colors.grey,
+                                      width: 1.5,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Reject',
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ],
+                ),
+              ),
       ),
     );
   }
-}
 
-class ClaimDetailScreen {
+  Widget _row(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(fontSize: 14, color: Colors.black87),
+          children: [
+            TextSpan(
+              text: '$label ',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextSpan(text: value),
+          ],
+        ),
+      ),
+    );
+  }
 }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'add_customer_screen.dart';
 import 'pending_claims_screen.dart';
-import 'claim_detail_screen.dart' hide PendingClaimsScreen;
+import '../services/api_service.dart';
+import 'insurance_patient_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -9,37 +10,32 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Hardcoded Data
-  final List<Map<String, String>> allPatients = [
-    {"id": "1", "name": "Zara", "mpi": "10293", "policy": "Gold - 99283"},
-    {
-      "id": "2",
-      "name": "Ayesha Khan",
-      "mpi": "44532",
-      "policy": "Silver - 11204",
-    },
-    {
-      "id": "3",
-      "name": "Ahmed Ali",
-      "mpi": "88723",
-      "policy": "Bronze - 55642",
-    },
-  ];
-
-  List<Map<String, String>> filteredPatients = [];
+  late Future<List<dynamic>> _patientsFuture;
+  List<dynamic> _allPatients = [];
+  List<dynamic> _filteredPatients = [];
   int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    filteredPatients = allPatients;
+    _load();
+  }
+
+  Future<void> _load() async {
+    _patientsFuture = ApiService.getAllPatients();
+    final data = await _patientsFuture;
+    setState(() {
+      _allPatients = data;
+      _filteredPatients = data;
+    });
   }
 
   void _runFilter(String query) {
     setState(() {
-      filteredPatients = allPatients
+      _filteredPatients = _allPatients
           .where(
-            (user) => user["name"]!.toLowerCase().contains(query.toLowerCase()),
+            (p) =>
+                (p['name'] ?? '').toLowerCase().contains(query.toLowerCase()),
           )
           .toList();
     });
@@ -51,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color(0xFFF8F9FB),
       body: Column(
         children: [
-          // BARA DARK BLUE HEADER (Exact Figma)
+          // Header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.only(
@@ -61,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
               right: 25,
             ),
             decoration: const BoxDecoration(
-              color: Color.fromARGB(255, 248, 248, 248), // Dark Blue
+              color: Color.fromARGB(255, 248, 248, 248),
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
@@ -79,14 +75,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Search Bar
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: TextField(
-                    onChanged: (value) => _runFilter(value),
+                    onChanged: _runFilter,
                     decoration: const InputDecoration(
                       hintText: "Search customer...",
                       prefixIcon: Icon(Icons.search, color: Color(0xFF4C84F3)),
@@ -99,57 +94,84 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // LIST AREA
+          // List
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: filteredPatients.length,
-              itemBuilder: (context, index) {
-                var item = filteredPatients[index];
-                return GestureDetector(
-                  // onTap: () {
-                  //   // Click karne par Detail Screen (Zara hardcoded data)
-                  //   Navigator.push(
-                  //     context,
-                  //     MaterialPageRoute(
-                  //       builder: (c) =>
-                  //           ClaimDetailScreen(claimId: int.parse(item['id']!)
-                  //           ),
-                  //     ),
-                  //   );
-                  // },
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 15),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.02),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+            child: FutureBuilder<List<dynamic>>(
+              future: _patientsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF4C84F3)),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                if (_filteredPatients.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No patients found',
+                      style: TextStyle(color: Colors.grey),
                     ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: const Color(0xFFEDF2FF),
-                        child: const Icon(
-                          Icons.person,
-                          color: Color(0xFF4C84F3),
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: _load,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(20),
+                    itemCount: _filteredPatients.length,
+                    itemBuilder: (context, index) {
+                      final p = _filteredPatients[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  InsurancePatientDetailScreen(pid: p['p_id']),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 15),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.02),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ListTile(
+                            leading: const CircleAvatar(
+                              backgroundColor: Color(0xFFEDF2FF),
+                              child: Icon(
+                                Icons.person,
+                                color: Color(0xFF4C84F3),
+                              ),
+                            ),
+                            title: Text(
+                              p['name'] ?? 'N/A',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'nic: ${p['nic'] ?? 'N/A'}\nPolicy: ${p['policy_number'] ?? 'N/A'}',
+                            ),
+                            trailing: const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 14,
+                              color: Colors.grey,
+                            ),
+                          ),
                         ),
-                      ),
-                      title: Text(
-                        item['name']!,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text("MPI: ${item['mpi']}\n${item['policy']}"),
-                      trailing: const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 14,
-                        color: Colors.grey,
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 );
               },
@@ -158,14 +180,13 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      // TOTAL 3 NAVIGATION ITEMS (As per your Screenshot)
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF4C84F3),
         unselectedItemColor: const Color(0xFFC0CCDA),
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_filled, size: 28),
@@ -185,12 +206,12 @@ class _HomeScreenState extends State<HomeScreen> {
           if (index == 1) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (c) => AddCustomerScreen()),
+              MaterialPageRoute(builder: (_) => AddCustomerScreen()),
             );
           } else if (index == 2) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (c) => PendingClaimsScreen()),
+              MaterialPageRoute(builder: (_) => PendingClaimsScreen()),
             );
           }
         },
