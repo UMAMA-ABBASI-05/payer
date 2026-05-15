@@ -36,7 +36,7 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
         centerTitle: true,
       ),
       body: FutureBuilder<List<dynamic>>(
-        future:_lnsuranceFuture,
+        future: _lnsuranceFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -93,13 +93,13 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                               color: primaryBlue,
                             ),
                           ),
-                          // Text(
-                          //   'ID: ${insurance['insurance_id'] ?? 'N/A'}',
-                          //   style: const TextStyle(
-                          //     fontSize: 12,
-                          //     color: Colors.grey,
-                          //   ),
-                          // ),
+                          Text(
+                            'ID: ${insurance['insurance_id'] ?? 'N/A'}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
                         ],
                       ),
                     ),
