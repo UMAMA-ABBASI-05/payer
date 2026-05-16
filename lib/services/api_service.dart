@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   // Physical device ke liye laptop ka IP use karein (e.g., 192.168.x.x)
-  static const String baseUrl = "http://192.168.31.247:8003";
+  static const String baseUrl = "http://192.168.51.14:8003";
   static Future<List<dynamic>> getAllInsurances() async {
     final res = await http.get(Uri.parse('$baseUrl/all-insurances'));
     if (res.statusCode == 200) return jsonDecode(res.body);
@@ -86,7 +86,7 @@ class ApiService {
     String insuranceId,
   ) async {
     final res = await http.post(
-      Uri.parse('$baseUrl/Login'),
+      Uri.parse('$baseUrl/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'email': email,
@@ -106,7 +106,7 @@ class ApiService {
     String insuranceId,
   ) async {
     final res = await http.post(
-      Uri.parse('$baseUrl/SignUp'),
+      Uri.parse('$baseUrl/signup'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'user_name': userName,
@@ -117,7 +117,7 @@ class ApiService {
     );
     if (res.statusCode != 201) {
       final error = jsonDecode(res.body);
-      throw Exception(error['detail'] ?? 'Signup failed');
+      throw Exception(error['detail'] ?? 'signup failed');
     }
   }
 

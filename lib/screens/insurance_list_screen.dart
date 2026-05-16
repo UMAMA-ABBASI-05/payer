@@ -11,10 +11,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late Future<List<dynamic>> _patientsFuture;
   List<dynamic> _allPatients = [];
   List<dynamic> _filteredPatients = [];
   int _currentIndex = 0;
+  bool _loading = false;
 
   @override
   void initState() {
@@ -23,14 +23,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final insuranceId = prefs.getString('insurance_id') ?? '';
-    _patientsFuture = ApiService.getAllPatients(insuranceId);
-    final data = await _patientsFuture;
-    setState(() {
-      _allPatients = data;
-      _filteredPatients = data;
-    });
+    setState(() => _loading = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final insuranceId = prefs.getString('insurance_id') ?? '';
+      print('Insurance ID: $insuranceId');
+
+      final data = await ApiService.getAllPatients(insuranceId);
+      setState(() {
+        _allPatients = data;
+        _filteredPatients = data;
+        _loading = false;
+      });
+    } catch (e) {
+      print('Load error: $e');
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   void _runFilter(String query) {
@@ -99,86 +107,76 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // List
           Expanded(
-            child: FutureBuilder<List<dynamic>>(
-              future: _patientsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
+            child: _loading
+                ? const Center(
                     child: CircularProgressIndicator(color: Color(0xFF4C84F3)),
-                  );
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                if (_filteredPatients.isEmpty) {
-                  return const Center(
+                  )
+                : _filteredPatients.isEmpty
+                ? const Center(
                     child: Text(
                       'No patients found',
                       style: TextStyle(color: Colors.grey),
                     ),
-                  );
-                }
-
-                return RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(20),
-                    itemCount: _filteredPatients.length,
-                    itemBuilder: (context, index) {
-                      final p = _filteredPatients[index];
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  InsurancePatientDetailScreen(pid: p['p_id']),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 15),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.02),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _load,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(20),
+                      itemCount: _filteredPatients.length,
+                      itemBuilder: (context, index) {
+                        final p = _filteredPatients[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => InsurancePatientDetailScreen(
+                                  pid: p['p_id'],
+                                ),
                               ),
-                            ],
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 15),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.02),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ListTile(
+                              leading: const CircleAvatar(
+                                backgroundColor: Color(0xFFEDF2FF),
+                                child: Icon(
+                                  Icons.person,
+                                  color: Color(0xFF4C84F3),
+                                ),
+                              ),
+                              title: Text(
+                                p['name'] ?? 'N/A',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'NIC: ${p['nic'] ?? 'N/A'}\nPolicy: ${p['policy_number'] ?? 'N/A'}',
+                              ),
+                              trailing: const Icon(
+                                Icons.arrow_forward_ios,
+                                size: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ),
-                          child: ListTile(
-                            leading: const CircleAvatar(
-                              backgroundColor: Color(0xFFEDF2FF),
-                              child: Icon(
-                                Icons.person,
-                                color: Color(0xFF4C84F3),
-                              ),
-                            ),
-                            title: Text(
-                              p['name'] ?? 'N/A',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text(
-                              'nic: ${p['nic'] ?? 'N/A'}\nPolicy: ${p['policy_number'] ?? 'N/A'}',
-                            ),
-                            trailing: const Icon(
-                              Icons.arrow_forward_ios,
-                              size: 14,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),

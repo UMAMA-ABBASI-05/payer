@@ -62,27 +62,27 @@ class _PendingClaimsScreenState extends State<PendingClaimsScreen> {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('user_id') ?? 0;
 
-    // Lock API call
-    final locked = await ApiService.lockClaim(claimId, userId);
-    if (!mounted) return;
+    // // Lock API call
+    // final locked = await ApiService.lockClaim(claimId, userId);
+    // if (!mounted) return;
 
-    if (!locked) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Screen is locked by another user'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
+    // if (!locked) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(
+    //       content: Text('Screen is locked by another user'),
+    //       backgroundColor: Colors.orange,
+    //     ),
+    //   );
+    //   return;
+    // }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Screen locked by you'),
-        backgroundColor: Color.fromARGB(255, 18, 38, 80),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   const SnackBar(
+    //     content: Text('Screen locked by you'),
+    //     backgroundColor: Color.fromARGB(255, 18, 38, 80),
+    //     duration: Duration(seconds: 2),
+    //   ),
+    // );
 
     await Navigator.push(
       context,
@@ -249,7 +249,7 @@ class _PendingClaimsScreenState extends State<PendingClaimsScreen> {
                                             ),
                                           ),
                                           Text(
-                                            'nic: ${claim['nic'] ?? 'N/A'}',
+                                            'NIC: ${claim['nic'] ?? 'N/A'}',
                                             style: const TextStyle(
                                               fontSize: 12,
                                               color: Colors.grey,

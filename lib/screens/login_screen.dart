@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:payer/screens/admin_login_screen.dart';
+import 'package:payer/screens/insurance_list_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 //import 'package:lis/screens/admin_login_screen.dart';
 //import 'package:lis/screens/main_wrapper.dart';
@@ -71,12 +72,11 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('insurance_id', _selectedInsuranceID!);
-      // await SessionManager.saveSession(res['user_id'], res['user_name'] ?? '');
       if (!mounted) return;
-      // Navigator.pushReplacement(
-      // context,
-      // MaterialPageRoute(builder: (_) => const MainWrapper()),
-      // );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => HomeScreen()), // ← add karo
+      );
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(

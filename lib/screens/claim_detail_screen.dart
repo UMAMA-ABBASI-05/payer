@@ -40,17 +40,17 @@ class _ClaimDetailScreenState extends State<ClaimDetailScreen> {
   }
 
   Future<void> _unlockAndPop() async {
-    await ApiService.unlockClaim(widget.claimId, widget.userId);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Screen unlocked'),
-          backgroundColor: Colors.grey,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      Navigator.pop(context);
-    }
+    // await ApiService.unlockClaim(widget.claimId, widget.userId);
+    // if (mounted) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(
+    //       content: Text('Screen unlocked'),
+    //       backgroundColor: Colors.grey,
+    //       duration: Duration(seconds: 2),
+    //     ),
+    //   );
+    // }
+    if (mounted) Navigator.pop(context);
   }
 
   Future<void> _changeStatus(String status) async {
@@ -63,7 +63,7 @@ class _ClaimDetailScreenState extends State<ClaimDetailScreen> {
       );
       if (!mounted) return;
       if (ok) {
-        await ApiService.unlockClaim(widget.claimId, widget.userId);
+        // await ApiService.unlockClaim(widget.claimId, widget.userId);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Claim $status successfully!'),
@@ -93,15 +93,15 @@ class _ClaimDetailScreenState extends State<ClaimDetailScreen> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        await ApiService.unlockClaim(widget.claimId, widget.userId);
-        if (mounted)
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Screen unlocked'),
-              backgroundColor: Colors.grey,
-              duration: Duration(seconds: 2),
-            ),
-          );
+        // await ApiService.unlockClaim(widget.claimId, widget.userId);
+        // if (mounted)
+        //   ScaffoldMessenger.of(context).showSnackBar(
+        //     const SnackBar(
+        //       content: Text('Screen unlocked'),
+        //       backgroundColor: Colors.grey,
+        //       duration: Duration(seconds: 2),
+        //     ),
+        //   );
         return true;
       },
       child: Scaffold(
