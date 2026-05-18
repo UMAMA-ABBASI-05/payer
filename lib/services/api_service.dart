@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   // Physical device ke liye laptop ka IP use karein (e.g., 192.168.x.x)
-  static const String baseUrl = "http://192.168.51.14:8003";
+  static const String baseUrl = "http://192.168.11.14:8003";
   static Future<List<dynamic>> getAllInsurances() async {
     final res = await http.get(Uri.parse('$baseUrl/all-insurances'));
     if (res.statusCode == 200) return jsonDecode(res.body);
